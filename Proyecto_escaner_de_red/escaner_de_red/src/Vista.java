@@ -1,9 +1,14 @@
 import java.awt.*;
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class Vista extends JFrame{
     private JLabel texto;
     private JTextField ipInicioField, ipFinField;
+    private JButton iniciarButton, limpiarButton, configuracionButton;
+    private JPanel buttonPanel;
+    private JTable tabla;
+    private DefaultTableModel modeloTabla;
 
     public Vista() {
         // Configuración básica de la ventana
@@ -46,11 +51,32 @@ public class Vista extends JFrame{
         gbc.gridwidth = 2;
         panel.add(ipFinField, gbc);
 
+        // Tabla para mostrar resultados (solo lectura)
+        modeloTabla = new DefaultTableModel(new Object[][]{}, new String[]{"IP", "Nombre", "Estado", "Respuesta (ms)"}) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        tabla = new JTable(modeloTabla);
+        JScrollPane scrollPane = new JScrollPane(tabla);
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        gbc.gridwidth = 3;
+        gbc.fill = GridBagConstraints.BOTH;
+        gbc.weightx = 1.0;
+        gbc.weighty = 1.0;
+        panel.add(scrollPane, gbc);
+
+        // Resetear pesos para siguientes componentes
+        gbc.weightx = 0;
+        gbc.weighty = 0;
+
         // Panel para los botones
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JButton iniciarButton = new JButton("Iniciar escaneo");
-        JButton limpiarButton = new JButton("Limpiar pantalla");
-        JButton configuracionButton = new JButton("Configuración");
+        buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        iniciarButton = new JButton("Iniciar escaneo");
+        limpiarButton = new JButton("Limpiar pantalla");
+        configuracionButton = new JButton("Configuración");
         buttonPanel.add(iniciarButton);
         buttonPanel.add(limpiarButton);
         buttonPanel.add(configuracionButton);
@@ -67,5 +93,29 @@ public class Vista extends JFrame{
 
         // Hacer la ventana visible
         setVisible(true);
+        }
+
+    public JTextField getIPinicioField(){
+        return ipInicioField;
+    }
+
+    public JTextField getIPfinField(){
+        return ipFinField;
+    }
+
+    public JButton getIniciarButton(){
+        return iniciarButton;
+    }
+
+    public JButton getLimpiarButton(){
+        return limpiarButton;
+    }
+
+    public JButton getConfiguracionButton(){
+        return configuracionButton;
+    }
+
+    public DefaultTableModel getModeloTabla(){
+        return modeloTabla;
     }
 }
