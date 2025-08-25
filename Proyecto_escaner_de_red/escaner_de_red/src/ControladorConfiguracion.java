@@ -1,3 +1,4 @@
+package src; 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import javax.swing.JOptionPane;
@@ -10,6 +11,7 @@ public class ControladorConfiguracion implements ActionListener {
     public ControladorConfiguracion(VistaConfiguracion vistaConfig) {
         this.vistaConfig = vistaConfig;
         this.vistaConfig.getBotonGuardar().addActionListener(this);
+        vistaConfig.setVisible(true);
     }
 
     @Override

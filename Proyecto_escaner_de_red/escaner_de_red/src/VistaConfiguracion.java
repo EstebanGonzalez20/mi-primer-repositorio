@@ -1,3 +1,4 @@
+package src; 
 import javax.swing.*;
 import java.awt.*;
 
@@ -44,8 +45,6 @@ public class VistaConfiguracion extends JDialog {
         gbc.gridwidth = 2;
         gbc.anchor = GridBagConstraints.CENTER;
         add(botonGuardar, gbc);
-
-        setVisible(true);
     }
 
     // Getters

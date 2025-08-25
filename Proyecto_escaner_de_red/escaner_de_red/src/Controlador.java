@@ -1,12 +1,12 @@
+package src; 
 import java.awt.event.*;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.JProgressBar;
 import javax.swing.SwingWorker;
+import javax.swing.event.DocumentListener;
+import javax.swing.event.DocumentEvent;
 import javax.swing.table.TableModel;
 
 public class Controlador implements ActionListener{
@@ -14,17 +14,20 @@ public class Controlador implements ActionListener{
     private Vista vista;
     private int tiempo = 0;
     private String formato = "CSV";
+    private int conectadas;
+    private boolean descendente = false;
 
     public Controlador(){
         vista = new Vista();
-        vista.getIPinicioField().addActionListener(this);
-        vista.getIPfinField().addActionListener(this);
+        agregarValidadorIP(vista.getIPinicioField());
+        agregarValidadorIP(vista.getIPfinField());
         vista.getIniciarButton().addActionListener(this);
         vista.getLimpiarButton().addActionListener(this);
         vista.getConfiguracionButton().addActionListener(this);
         vista.getGuardarButton().addActionListener(this);
+        vista.getOrdenarButton().addActionListener(this);
+        vista.getFiltrarButton().addActionListener(this);
         vista.setVisible(true);
-
     }
     @Override
 
@@ -37,27 +40,33 @@ public class Controlador implements ActionListener{
                 JOptionPane.showMessageDialog(null, "Error, debe haber una IP de principio y de fin", "Error", JOptionPane.ERROR_MESSAGE);
             } 
 
-            else if(!IP.esIPValida(fin) || !IP.esIPValida(inicio)){
-                JOptionPane.showMessageDialog(null, "Error, ingrese las IPs correctamente", "Error", JOptionPane.ERROR_MESSAGE);
+            else if(IP.esMayorQue(inicio, fin)){
+                JOptionPane.showMessageDialog(null, "Error, ingrese la IP más grande al como fin del rango", "Error", JOptionPane.ERROR_MESSAGE);
             } 
 
             else {
-                // Validaciones ya hechas aquí...
-
+                
                 SwingWorker<Void, Object[]> worker = new SwingWorker<Void, Object[]>() {
                     @Override
                     protected Void doInBackground() throws Exception {
+                        conectadas = 0;
                         IP ipFin = new IP(fin);
                         IP ipActual = new IP(inicio);
-                        int totalIPs = IP.diferenciaEntreIPs(inicio, fin);
+                        int totalIPs = IP.diferenciaEntreIPs(inicio, fin) + 1;
                         int progreso = 0;
 
-                        while (!ipActual.getIpCompleta().equals(ipFin.getIpCompleta())) {
+                        while (true) {
+                            System.out.println(ipActual.getIpCompleta());
                             String nombre;
                             String coneccion;
                             long inicioProceso = System.currentTimeMillis();
                             
-                            ArrayList<String> ping = CMD.ejecutarComando("ping " + ipActual.getIpCompleta());
+                            ArrayList<String> ping;
+                            if (tiempo != 0){
+                                ping = CMD.ejecutarComando("ping " + ipActual.getIpCompleta() + " -w " + tiempo);
+                            } else {
+                                ping = CMD.ejecutarComando("ping " + ipActual.getIpCompleta());
+                            }
                             ArrayList<String> nslookup = CMD.ejecutarComando("nslookup " + ipActual.getIpCompleta());
 
                             if (nslookup.size() > 4) {
@@ -70,6 +79,8 @@ public class Controlador implements ActionListener{
                                 coneccion = "Desconectado";
                             } else {
                                 coneccion = "Conectado";
+                                conectadas++;
+                                vista.getConectadas().setText("Dispositivos conectados: " + conectadas);
                             }
 
                             long finalProceso = System.currentTimeMillis();
@@ -80,6 +91,9 @@ public class Controlador implements ActionListener{
                             progreso++;
                             setProgress((progreso * 100) / totalIPs);  // Actualiza progreso
 
+                            if (ipActual.getIpCompleta().equals(ipFin.getIpCompleta())) {
+                                break; // Sale del bucle si se alcanzó la IP final
+                            }
                             ipActual.setNumero4(ipActual.getNumero4() + 1);
                         }
 
@@ -123,61 +137,71 @@ public class Controlador implements ActionListener{
             ControladorConfiguracion c = new ControladorConfiguracion(ventanaConfig);
             tiempo = c.getTiempoRespuesta();
             formato = c.getFormato();
-            System.out.println(tiempo);
-            System.out.println(formato);
         } 
 
         else if(e.getSource() == vista.getGuardarButton()){
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setDialogTitle("Guardar resultados como");
-
             int userSelection = fileChooser.showSaveDialog(null);
 
             if (userSelection == JFileChooser.APPROVE_OPTION) {
                 String path = fileChooser.getSelectedFile().getAbsolutePath();
 
                 // Asegura que el archivo tenga extensión .csv
-                if (!path.toLowerCase().endsWith(".csv")) {
-                    path += ".csv";
+                if (!path.toLowerCase().endsWith("." + formato.toLowerCase())) {
+                    path += "." + formato.toLowerCase();
                 }
 
-                guardarResultadosComoCSV(path);
+                Archivo.guardarResultados(path, vista.getModeloTabla());
             }
         }
-        
+
+        else if(e.getSource() == vista.getOrdenarButton()){
+            if(descendente){
+                TablaOrdenadora.ordenarAscendente(vista.getModeloTabla(), 0); // Ordena por IP (columna 0)
+                descendente = false;
+            } else {
+                TablaOrdenadora.ordenarDescendente(vista.getModeloTabla(), 0); // Ordena por IP (columna 0)
+                descendente = true;
+            }
+        }
+
+        else if(e.getSource() == vista.getFiltrarButton()){
+            String estado = (String) JOptionPane.showInputDialog(null, "Seleccione el estado a filtrar:",
+                "Filtrar por estado", JOptionPane.QUESTION_MESSAGE, null,
+                new String[]{"Conectado", "Desconectado"}, "Conectado");
+
+            if (estado != null) {
+                TableModel model = vista.getModeloTabla();
+                javax.swing.table.TableRowSorter<TableModel> sorter = new javax.swing.table.TableRowSorter<>(model);
+                vista.getTabla().setRowSorter(sorter);
+                sorter.setRowFilter(javax.swing.RowFilter.regexFilter(estado, 2)); // Filtra por la columna "Estado" (índice 2)
+            }
+        }
     }
 
-    public void guardarResultadosComoCSV(String nombreArchivo) {
-        try (FileWriter csvWriter = new FileWriter(nombreArchivo)) {
-            TableModel modelo = vista.getModeloTabla();
+    private void agregarValidadorIP(javax.swing.JTextField campo) {
+    campo.getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            validarIP(campo.getText(), campo);
+        }
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            validarIP(campo.getText(), campo);
+        }
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            validarIP(campo.getText(), campo);
+        }
+        });
+    }
 
-            // Escribir encabezados
-            for (int i = 0; i < modelo.getColumnCount(); i++) {
-                csvWriter.append(modelo.getColumnName(i));
-                if (i < modelo.getColumnCount() - 1) {
-                    csvWriter.append(",");
-                }
-            }
-            csvWriter.append("\n");
-
-            // Escribir filas
-            for (int row = 0; row < modelo.getRowCount(); row++) {
-                for (int col = 0; col < modelo.getColumnCount(); col++) {
-                    Object valor = modelo.getValueAt(row, col);
-                    csvWriter.append(valor != null ? valor.toString() : "");
-                    if (col < modelo.getColumnCount() - 1) {
-                        csvWriter.append(",");
-                    }
-                }
-                csvWriter.append("\n");
-            }
-
-            csvWriter.flush();
-            JOptionPane.showMessageDialog(null, "Resultados guardados en: " + nombreArchivo);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error al guardar el archivo: " + e.getMessage(),
-                                        "Error", JOptionPane.ERROR_MESSAGE);
+    private void validarIP(String texto, javax.swing.JTextField campo) {
+        if (IP.esIPValida(texto)) {
+            campo.setBackground(java.awt.Color.WHITE); // IP válida → fondo blanco
+        } else {
+            campo.setBackground(java.awt.Color.PINK);  // IP inválida → fondo rosado
         }
     }
 }
-

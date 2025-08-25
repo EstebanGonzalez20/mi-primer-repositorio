@@ -1,3 +1,5 @@
+package src; 
+
 public class IP {
     // Atributos privados
     private String ipCompleta;
@@ -85,22 +87,40 @@ public class IP {
         return ip.matches("^((25[0-5]|2[0-4]\\d|[0-1]?\\d{1,2})\\.){3}(25[0-5]|2[0-4]\\d|[0-1]?\\d{1,2})$");
     }
 
-        /**
-         * Calcula la diferencia absoluta entre dos IPs (en formato "a.b.c.d")
-         * Devuelve la suma de las diferencias absolutas de cada octeto.
-         */
-        public static int diferenciaEntreIPs(String ip1, String ip2) {
-            String[] partes1 = ip1.split("\\.");
-            String[] partes2 = ip2.split("\\.");
-            if (partes1.length != 4 || partes2.length != 4) {
-                throw new IllegalArgumentException("Las IPs deben tener formato a.b.c.d");
-            }
-            int diferencia = 0;
-            for (int i = 0; i < 4; i++) {
-                int n1 = Integer.parseInt(partes1[i]);
-                int n2 = Integer.parseInt(partes2[i]);
-                diferencia += Math.abs(n1 - n2);
-            }
-            return diferencia;
+    /**
+     * Calcula la diferencia absoluta entre dos IPs (en formato "a.b.c.d")
+     * Devuelve la suma de las diferencias absolutas de cada octeto.
+     */
+    public static int diferenciaEntreIPs(String ip1, String ip2) {
+        String[] partes1 = ip1.split("\\.");
+        String[] partes2 = ip2.split("\\.");
+        if (partes1.length != 4 || partes2.length != 4) {
+            throw new IllegalArgumentException("Las IPs deben tener formato a.b.c.d");
         }
+        int diferencia = 0;
+        for (int i = 0; i < 4; i++) {
+            int n1 = Integer.parseInt(partes1[i]);
+            int n2 = Integer.parseInt(partes2[i]);
+            diferencia += Math.abs(n1 - n2) * Math.pow(256, 3 - i);
+        }
+        return diferencia;
+    }
+
+    /**
+     * Verifica si la IP ip1 es mayor que ip2 (compara octeto por octeto)
+     */
+    public static boolean esMayorQue(String ip1, String ip2) {
+        String[] partes1 = ip1.split("\\.");
+        String[] partes2 = ip2.split("\\.");
+        if (partes1.length != 4 || partes2.length != 4) {
+            throw new IllegalArgumentException("Las IPs deben tener formato a.b.c.d");
+        }
+        for (int i = 0; i < 4; i++) {
+            int n1 = Integer.parseInt(partes1[i]);
+            int n2 = Integer.parseInt(partes2[i]);
+            if (n1 > n2) return true;
+            if (n1 < n2) return false;
+        }
+        return false; // Son iguales
+    }
 }
