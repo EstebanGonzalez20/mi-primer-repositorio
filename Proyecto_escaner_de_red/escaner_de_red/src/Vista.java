@@ -1,17 +1,11 @@
-package src; 
-
 import java.awt.*;
-
 import javax.swing.*;
-
 import javax.swing.table.DefaultTableModel;
-
-
 
 public class Vista extends JFrame{
     private JLabel texto, labelConectadas;
     private JTextField ipInicioField, ipFinField;
-    private JButton iniciarButton, limpiarButton, configuracionButton, guardarButton, ordenarButton, filtrarButton;
+    private JButton iniciarButton, limpiarButton, configuracionButton, guardarButton, ordenarButton, filtrarButton, puertosButton, rutasButton;
     private JPanel buttonPanel;
     private JTable tabla;
     private DefaultTableModel modeloTabla;
@@ -19,7 +13,7 @@ public class Vista extends JFrame{
     public Vista() {
         // Configuración básica de la ventana
         setTitle("Escaner de red");
-        setSize(600, 500);
+        setSize(700, 500);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -82,11 +76,15 @@ public class Vista extends JFrame{
         gbc.gridwidth = 1;
         panel.add(labelConectadas, gbc);
 
-        buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         ordenarButton = new JButton("Ordenar");
         filtrarButton = new JButton("Filtrar");
+        puertosButton = new JButton("Ver conexiones");
+        rutasButton = new JButton("Ver enrutamiento");
         buttonPanel.add(ordenarButton);
         buttonPanel.add(filtrarButton);
+        buttonPanel.add(puertosButton);
+        buttonPanel.add(rutasButton);
 
         gbc.gridx = 1;
         gbc.gridy = 3;
@@ -165,5 +163,13 @@ public class Vista extends JFrame{
 
     public JButton getFiltrarButton(){
         return filtrarButton;
+    }
+
+    public JButton getPuertosButton(){
+        return puertosButton;
+    }
+
+    public JButton getRutasButton(){
+        return rutasButton;
     }
 }
